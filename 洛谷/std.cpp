@@ -1,112 +1,100 @@
 #include <bits/stdc++.h>
-#define fp(i, a, b) for (register int i = a, I = b + 1; i < I; ++i)
-#define fd(i, a, b) for (register int i = a, I = b - 1; i > I; --i)
-#define go(u) for (register int i = fi[u], v = e[i].to; i; v = e[i = e[i].nx].to)
-#define file(s) freopen(s ".in", "r", stdin), freopen(s ".out", "w", stdout)
-template <class T>
-inline bool cmax(T &a, const T &b) { return a < b ? a = b, 1 : 0; }
-template <class T>
-inline bool cmin(T &a, const T &b) { return a > b ? a = b, 1 : 0; }
+#define N 1000020
 using namespace std;
-char ss[1 << 17], *A = ss, *B = ss;
-inline char gc() { return A == B && (B = (A = ss) + fread(ss, 1, 1 << 17, stdin), A == B) ? -1 : *A++; }
-template <class T>
-inline void sd(T &x)
+typedef double dl;
+int n, t = 1;
+struct sgt_tag
 {
-	char c;
-	T y = 1;
-	while (c = gc(), (c < 48 || 57 < c) && c != -1)
-		if (c == 45)
-			y = -1;
-	x = c - 48;
-	while (c = gc(), 47 < c && c < 58)
-		x = x * 10 + c - 48;
-	x *= y;
-}
-char sr[1 << 21], z[20];
-int C = -1, Z;
-inline void Ot() { fwrite(sr, 1, C + 1, stdout), C = -1; }
-template <class T>
-inline void we(T x)
+#define ls q << 1
+#define rs q << 1 | 1
+	int tot, tag[N * 4];
+	struct function
+	{
+		dl k, b;
+	} fun[N * 4];
+	inline dl val(int x, int id) { return fun[id].k * (x - 1) + fun[id].b; } //因为起始点是1所以x要-1
+	inline void ins(dl k, dl b)
+	{
+		fun[++tot].k = k;
+		fun[tot].b = b;
+		change(1, 1, N, tot);
+	}
+	inline void change(int q, int l, int r, int id)
+	{
+		if (l == r)
+		{
+			if (val(l, id) > val(l, tag[q]))
+				tag[q] = id;
+			return;
+		}
+		int mid = (l + r) >> 1;
+		if (fun[id].k > fun[tag[q]].k)
+		{
+			if (val(mid, id) > val(mid, tag[q]))
+				change(ls, l, mid, tag[q]), tag[q] = id;
+			else
+				change(rs, mid + 1, r, id);
+		}
+		else
+		{
+			if (val(mid, id) > val(mid, tag[q]))
+				change(rs, mid + 1, r, tag[q]), tag[q] = id;
+			else
+				change(ls, l, mid, id);
+		}
+	}
+	inline dl query(int q, int l, int r, int x)
+	{
+		if (l == r)
+			return val(l, tag[q]);
+		int mid = (l + r) >> 1;
+		dl ans = val(x, tag[q]);
+		if (x <= mid)
+			ans = max(ans, query(ls, l, mid, x));
+		else
+			ans = max(ans, query(rs, mid + 1, r, x));
+		return ans;
+	}
+} T;
+inline int read()
 {
-	if (C > 1 << 20)
-		Ot();
-	if (x < 0)
-		sr[++C] = 45, x = -x;
-	while (z[++Z] = x % 10 + 48, x /= 10)
-		;
-	while (sr[++C] = z[Z], --Z)
-		;
-	sr[++C] = '\n';
-}
-const int N = 1e5 + 5, inf = 2e9;
-typedef int arr[N];
-typedef long long ll;
-struct Q
-{
-	int l, r, x, id;
-	inline bool operator<(const Q b) const { return x == b.x ? x & 1 ? r < b.r : r > b.r : x < b.x; }
-} q[N];
-int n, m, Sz, Top, Mi[17], f[N][17];
-arr a, pre, suf, S, Log;
-ll Now, fl[N], fr[N], ans[N];
-inline int cmp(const int x, const int y) { return a[x] < a[y] ? x : y; }
-inline int qry(int L, int R)
-{
-	int t = Log[R - L + 1];
-	return cmp(f[L][t], f[R - Mi[t] + 1][t]);
-}
-inline ll left(int L, int R)
-{
-	int p = qry(L - 1, R);
-	return (ll)a[p] * (R - p + 1) + fl[L - 1] - fl[p];
-}
-inline ll right(int L, int R)
-{
-	int p = qry(L, R + 1);
-	return (ll)a[p] * (p - L + 1) + fr[R + 1] - fr[p];
+	int x = 0, f = 1;
+	char ch = getchar();
+	while (!isdigit(ch))
+	{
+		if (ch == '-')
+			f = -f;
+		ch = getchar();
+	}
+	while (isdigit(ch))
+	{
+		x = x * 10 + ch - 48;
+		ch = getchar();
+	}
+	return x * f;
 }
 int main()
 {
-
-	sd(n);
-	sd(m);
-	Sz = sqrt(n);
-	a[n + 1] = a[0] = inf;
-	Mi[0] = 1;
-	fp(i, 1, 16) Mi[i] = Mi[i - 1] << 1;
-	fp(i, 2, n) Log[i] = Log[i >> 1] + 1;
-	fp(i, 1, n) sd(a[i]), f[i][0] = i;
-	fp(j, 1, Log[n]) fp(i, 1, n - Mi[j - 1] + 1)
-		f[i][j] = cmp(f[i][j - 1], f[i + Mi[j - 1]][j - 1]);
-	fp(i, 1, n)
+	n = read();
+begin:
+	if (t > n)
+		goto end;
+	t++;
+	char ch[10];
+	scanf("%s", ch);
+	if (ch[0] == 'P')
 	{
-		while (Top && a[S[Top]] > a[i])
-			suf[S[Top--]] = i;
-		pre[i] = S[Top];
-		S[++Top] = i;
+		dl k, b;
+		scanf("%lf%lf", &b, &k);
+		T.ins(k, b);
 	}
-	while (Top)
-		pre[S[Top]] = S[Top - 1], suf[S[Top--]] = n + 1;
-	fp(i, 1, n) fr[i] = (ll)a[i] * (i - pre[i]) + fr[pre[i]];
-	fd(i, n, 1) fl[i] = (ll)a[i] * (suf[i] - i) + fl[suf[i]];
-	int x, y, L, R;
-	fp(i, 1, m) sd(x), sd(y), q[i] = {x, y, x / Sz, i};
-	sort(q + 1, q + m + 1);
-	L = q[1].l, R = L - 1;
-	fp(i, 1, m)
+	if (ch[0] == 'Q')
 	{
-		x = q[i].l, y = q[i].r;
-		while (L > x)
-			Now += left(L, R), L--;
-		while (R < y)
-			Now += right(L, R), R++;
-		while (L < x)
-			Now -= left(L + 1, R), ++L;
-		while (R > y)
-			Now -= right(L, R - 1), --R;
-		ans[q[i].id] = Now;
+		int x = read();
+		dl ans = T.query(1, 1, N, x);
+		printf("%d\n", (int)ans / 100);
 	}
-	fp(i, 1, m) we(ans[i]);
-	return Ot(), 0;
+	goto begin;
+end:
+	return 0;
 }
