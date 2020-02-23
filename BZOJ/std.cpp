@@ -1,157 +1,108 @@
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
-struct nodea
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<queue>
+#include<cstring>
+#include<cstdio>
+
+int read()
 {
-    int x, y, d, g, f;
-} e[1000001];
-struct nodeb
-{
-    int first, h;
-} r[1000001];
-int inf = 999999999, st = 1001, ed = 1002, n = 0;
-int q[1000001], len = 0;
-int min(int x, int y)
-{
-    return x < y ? x : y;
+    int f=1,x=0;
+    char ss=getchar();
+    while(ss<'0'||ss>'9'){if(ss=='-')f=-1;ss=getchar();}
+    while(ss>='0'&&ss<='9'){x=x*10+ss-'0';ss=getchar();}
+    return f*x;
 }
-void ins(int x, int y, int d)
+
+const int maxn=200010;
+int n,m,q,cnt;
+struct edge{int u,v,dis;}rem[maxn];
+struct node{int v,nxt;}E[maxn];
+int head[maxn],tot;
+int ff[maxn],val[maxn];
+int fa[maxn],top[maxn],vis[maxn];
+int dep[maxn],son[maxn],size[maxn];
+bool cmp(edge a,edge b){return a.dis<b.dis;}
+
+void add(int u,int v)
 {
-    len++;
-
-    e[len].x = x;
-    e[len].y = y;
-    e[len].d = d;
-    e[len].g = r[x].first;
-    r[x].first = len;
-
-    len++;
-
-    e[len].x = y;
-    e[len].y = x;
-    e[len].d = 0;
-    e[len].g = r[y].first;
-    r[y].first = len;
-
-    e[len].f = len - 1;
-    e[len - 1].f = len;
+    E[++tot].nxt=head[u];
+    E[tot].v=v;
+    head[u]=tot;
 }
-bool bfs()
-{
-    int tou = 1, wei = 2;
-    for (int i = 1; i <= 2000; i++)
-    {
-        r[i].h = 0;
-    }
-    r[st].h = 1;
-    r[ed].h = 0;
 
-    q[1] = st;
+int find(int x)
+{
+    if(x==ff[x])return x;
+    else return ff[x]=find(ff[x]);
+}
 
-    while (tou < wei)
-    {
-        int x = q[tou];
-        for (int i = r[x].first; i > 0; i = e[i].g)
-        {
-            int y = e[i].y;
-            if (e[i].d > 0 && r[y].h == 0)
-            {
-                r[y].h = r[x].h + 1;
-                q[wei] = y;
-                wei++;
-            }
-        }
-        tou++;
-    }
-    if (r[ed].h > 0)
-    {
-        return true;
-    }
-    return false;
-}
-int dfs(int x, int f)
+void dfs1(int u,int pa)
 {
-    if (x == ed)
+    size[u]=1; vis[u]=1;
+    for(int i=head[u];i;i=E[i].nxt)
     {
-        return f;
+        int v=E[i].v;
+        if(v==pa) continue;
+        dep[v]=dep[u]+1; fa[v]=u;
+        dfs1(v,u);
+        size[u]+=size[v];
+        if(size[v]>size[son[u]])son[u]=v;
     }
-    int tt = 0;
-    for (int i = r[x].first; i > 0; i = e[i].g)
-    {
-        int y = e[i].y;
-        if (r[x].h + 1 == r[y].h && tt <= f && e[i].d > 0)
-        {
-            int my = dfs(y, min(e[i].d, f - tt));
-            tt += my;
-            e[i].d -= my;
-            e[e[i].f].d += my;
-        }
-    }
-    if (tt == 0)
-    {
-        r[x].h = 0;
-    }
-    return tt;
 }
-int dinic()
+
+void dfs2(int u,int tp)
 {
-    int ans = 0;
-    while (bfs() == true)
+    top[u]=tp;
+    if(son[u]) dfs2(son[u],tp);
+    for(int i=head[u];i;i=E[i].nxt)
     {
-        ans += dfs(st, inf);
+        int v=E[i].v;
+        if(v==son[u]||v==fa[u]) continue;
+        dfs2(v,v);
     }
-    return ans;
 }
-int main()
+
+void kruskal()
 {
-    int t = 0;
-    scanf("%d", &t);
-    while (t--)
+    for(int i=1;i<=n;++i)ff[i]=i;
+    std::sort(rem+1,rem+1+m,cmp);
+    for(int i=1;i<=m;++i)
     {
-        int tot = 0;
-        scanf("%d", &n);
-        memset(q, 0, sizeof(q));
-        memset(e, 0, sizeof(e));
-        memset(r, 0, sizeof(r));
-        len = 0;
-        int rn[101], ho[101];
-        for (int i = 1; i <= n; i++)
+        int fu=find(rem[i].u),fv=find(rem[i].v);
+        if(fu!=fv)
         {
-            scanf("%d", &rn[i]);
-            if (rn[i] == 1)
-            {
-                ins(i + n, ed, 1);
-            }
+            val[++cnt]=rem[i].dis;
+            ff[cnt]=ff[fu]=ff[fv]=cnt;
+            add(fu,cnt); add(cnt,fu);
+            add(fv,cnt); add(cnt,fv);
         }
-        for (int i = 1; i <= n; i++)
-        {
-            scanf("%d", &ho[i]);
-            if ((rn[i] == 1 && ho[i] == 0) || (rn[i] == 0))
-            {
-                ins(st, i, 1);
-                tot++;
-            }
-        }
-        for (int i = 1; i <= n; i++)
-        {
-            for (int j = 1; j <= n; j++)
-            {
-                int dx = 0;
-                scanf("%d", &dx);
-                if (dx == 1 || i == j)
-                {
-                    ins(i, j + n, 1);
-                }
-            }
-        }
-        if (dinic() >= tot)
-        {
-            printf("^_^\n");
-        }
-        else
-        {
-            printf("T_T\n");
-        }
+    }
+    dfs1(cnt,0); dfs2(cnt,cnt);
+}
+
+int LCA(int u,int v)
+{
+    while(top[u]!=top[v])
+    {
+        if(dep[top[u]]>dep[top[v]]) u=fa[top[u]];
+        else v=fa[top[v]];
+    }
+    if(dep[u]<dep[v])return u;
+    else return v;
+}
+
+int main() 
+{
+    n=read();m=read();q=read();cnt=n;
+    for(int i=1;i<=m;++i)
+    rem[i].u=read(),rem[i].v=read(),rem[i].dis=read();
+
+    kruskal();
+    while(q--)
+    {
+        int u=read(),v=read();
+        printf("%d\n",val[LCA(u,v)]);
     }
     return 0;
 }
