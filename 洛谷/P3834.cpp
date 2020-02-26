@@ -1,76 +1,86 @@
 #include <bits/stdc++.h>
-const int MaxN = 200010;
+
+#define R register
+#define ll long long
+#define sum(a, b, mod) (((a) + (b)) % mod)
+
+const int MaxN = 2e5 + 10;
+const int Max = MaxN * 32;
 
 struct node
 {
-    int val, l, r;
+    int sum, lc, rc;
 };
 
-node t[MaxN];
-int n, q, m, cnt;
-int a[MaxN << 4], b[MaxN << 4], T[MaxN << 4];
+int n, m, q;
+int a[MaxN], b[MaxN], root[MaxN];
 
-inline int build(int l, int r)
+struct SegmentTree
 {
-    int id = ++cnt;
-    t[id].val = 0;
-    if (l < r)
+    int cnt;
+    node t[Max];
+    void build(int &rt, int l, int r)
     {
+        rt = ++cnt, t[rt].sum = 0;
+        if (l == r) return;
         int mid = (l + r) >> 1;
-        t[id].l = build(l, mid);
-        t[id].r = build(mid + 1, r);
+        build(t[rt].lc, l, mid);
+        build(t[rt].rc, mid + 1, r);
     }
-    return id;
-}
-
-inline int update(int pre, int l, int r, int x)
-{
-    int id = ++cnt;
-    t[id].l = t[pre].l;
-    t[id].r = t[pre].r;
-    t[id].val = t[pre].val + 1;
-    if (l < r)
+    void modify(int &rt, int pre, int l, int r, int pos)
     {
+        rt = ++cnt, t[rt].lc = t[pre].lc;
+        t[rt].rc = t[pre].rc, t[rt].sum = t[pre].sum + 1;
+        if (l == r) return;
         int mid = (l + r) >> 1;
-        if (x <= mid)
-            t[id].l = update(t[pre].l, l, mid, x);
+        if (pos <= mid)
+            modify(t[rt].lc, t[pre].lc, l, mid, pos);
         else
-            t[id].r = update(t[pre].r, mid + 1, r, x);
+            modify(t[rt].rc, t[pre].rc, mid + 1, r, pos);
     }
-    return id;
-}
+    int query(int u, int v, int l, int r, int k)
+    {
+        if (l == r) return l;
+        int mid = (l + r) >> 1, num = t[t[v].lc].sum - t[t[u].lc].sum;
+        if (k <= num)
+            return query(t[u].lc, t[v].lc, l, mid, k);
+        else
+            return query(t[u].rc, t[v].rc, mid + 1, r, k - num);
+    }
+} T;
 
-inline int query(int u, int v, int l, int r, int k)
+inline int read()
 {
-    if (l >= r)
-        return l;
-    int mid = (l + r) >> 1, x = t[t[v].l].val - t[t[u].l].val;
-    if (x >= k)
-        return query(t[u].l, t[v].l, l, mid, k);
-    else
-        return query(t[u].r, t[v].r, mid + 1, r, k - x);
+    int x = 0, f = 1;
+    char ch = getchar();
+    while(ch > '9' || ch < '0')
+    {
+        if(ch == '-')
+            f = 0;
+        ch = getchar();
+    }
+    while(ch <= '9' && ch >= '0') 
+        x = (x << 1) + (x << 3) + (ch ^ 48), ch = getchar();
+    return f ? x : (-x);
 }
 
 int main()
 {
-    freopen("test.in", "r", stdin);
-    freopen("test.out", "w", stdout);
-    scanf("%d%d", &n, &q);
+    n = read(), q = read();
     for (int i = 1; i <= n; i++)
-        scanf("%d", &a[i]), b[i] = a[i];
+        a[i] = read(), b[i] = a[i];
     std::sort(b + 1, b + n + 1);
     m = std::unique(b + 1, b + n + 1) - b - 1;
-    T[0] = build(1, m);
+    T.build(root[0], 1, m);
     for (int i = 1; i <= n; i++)
     {
-        int tmp = std::lower_bound(b + 1, b + m + 1, a[i]) - b;
-        T[i] = update(T[i - 1], 1, m, tmp);
+        int val = std::lower_bound(b + 1, b + m + 1, a[i]) - b;
+        T.modify(root[i], root[i - 1], 1, m, val);
     }
     while (q--)
     {
-        int x, y, z;
-        scanf("%d%d%d", &x, &y, &z);
-        int tmp = query(T[x - 1], T[y], 1, m, z);
+        int x = read(), y = read(), z = read();
+        int tmp = T.query(root[x - 1], root[y], 1, m, z);
         printf("%d\n", b[tmp]);
     }
     return 0;
