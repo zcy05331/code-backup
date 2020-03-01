@@ -4,16 +4,16 @@
 #define ll long long
 #define sum(a, b, mod) (((a) + (b)) % mod)
 
-const int MaxN = 2e5 + 10;
-const int Max = MaxN * 24;
+const int MaxN = 5e5 + 10;
+const int Max = MaxN * 20;
 
 struct node
 {
     int sum, lc, rc;
 };
 
-int n, m, q;
-int a[MaxN], b[MaxN], root[MaxN];
+int n, q;
+int a[MaxN], root[MaxN];
 
 struct SegmentTree
 {
@@ -29,25 +29,18 @@ struct SegmentTree
             modify(t[rt].lc, t[pre].lc, l, mid, pos);
         else
             modify(t[rt].rc, t[pre].rc, mid + 1, r, pos);
-    } 
-    int query(int u, int v, int l, int r, int k)
+    }
+    int query(int u, int v, int l, int r, int len)
     {
         if (l == r) return l;
-        int mid = (l + r) >> 1, num = t[t[v].lc].sum - t[t[u].lc].sum;
-        if (k <= num)
-            return query(t[u].lc, t[v].lc, l, mid, k);
-        else
-            return query(t[u].rc, t[v].rc, mid + 1, r, k - num);
+        int mid = (l + r) >> 1;
+        if (2 * (t[t[v].lc].sum - t[t[u].lc].sum) > len)
+            return query(t[u].lc, t[v].lc, l, mid, len);
+        else if (2 * (t[t[v].rc].sum - t[t[u].rc].sum) > len)
+            return query(t[u].rc, t[v].rc, mid + 1, r, len);
+        return 0;
     }
 } T;
-
-void prework()
-{
-    std::sort(b + 1, b + n + 1);
-    m = std::unique(b + 1, b + n + 1) - b - 1;
-    for (int i = 1; i <= n; i++)
-        a[i] = std::lower_bound(b + 1, b + m + 1, a[i]) - b;
-}
 
 inline int read()
 {
@@ -64,14 +57,11 @@ int main()
 {
     n = read(), q = read();
     for (int i = 1; i <= n; i++)
-        a[i] = b[i] = read();
-    prework();
-    for (int i = 1; i <= n; i++)
-        T.modify(root[i], root[i - 1], 1, m, a[i]);
+        a[i] = read(), T.modify(root[i], root[i - 1], 1, n, a[i]);
     while (q--)
     {
-        int l = read(), r = read(), k = read();        
-        printf("%d\n", b[T.query(root[l - 1], root[r], 1, m, k)]);
+        int l = read(), r = read();
+        printf("%d\n", T.query(root[l - 1], root[r], 1, n, r - l + 1));
     }
     return 0;
 }

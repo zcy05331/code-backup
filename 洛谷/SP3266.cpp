@@ -4,8 +4,8 @@
 #define ll long long
 #define sum(a, b, mod) (((a) + (b)) % mod)
 
-const int MaxN = 2e5 + 10;
-const int Max = MaxN * 24;
+const int MaxN = 4e5 + 10;
+const int Max = MaxN * 20;
 
 struct node
 {
@@ -13,7 +13,7 @@ struct node
 };
 
 int n, m, q;
-int a[MaxN], b[MaxN], root[MaxN];
+int a[MaxN], b[MaxN], l[MaxN], r[MaxN], k[MaxN], root[MaxN];
 
 struct SegmentTree
 {
@@ -29,24 +29,24 @@ struct SegmentTree
             modify(t[rt].lc, t[pre].lc, l, mid, pos);
         else
             modify(t[rt].rc, t[pre].rc, mid + 1, r, pos);
-    } 
-    int query(int u, int v, int l, int r, int k)
+    }
+    int query(int u, int v, int l, int r, int ql, int qr)
     {
-        if (l == r) return l;
-        int mid = (l + r) >> 1, num = t[t[v].lc].sum - t[t[u].lc].sum;
-        if (k <= num)
-            return query(t[u].lc, t[v].lc, l, mid, k);
-        else
-            return query(t[u].rc, t[v].rc, mid + 1, r, k - num);
+        if (l > qr || ql > r) return 0;
+        if (ql <= l && r <= qr) return t[v].sum - t[u].sum;
+        int mid = (l + r) >> 1;
+        return query(t[u].lc, t[v].lc, l, mid, ql, qr) + query(t[u].rc, t[v].rc, mid + 1, r, ql, qr);
     }
 } T;
 
 void prework()
 {
-    std::sort(b + 1, b + n + 1);
-    m = std::unique(b + 1, b + n + 1) - b - 1;
+    std::sort(b + 1, b + n + q + 1);
+    m = std::unique(b + 1, b + n + q + 1) - b - 1;
     for (int i = 1; i <= n; i++)
         a[i] = std::lower_bound(b + 1, b + m + 1, a[i]) - b;
+    for (int i = 1; i <= q; i++)
+        k[i] = std::lower_bound(b + 1, b + m + 1, k[i]) - b;
 }
 
 inline int read()
@@ -62,16 +62,16 @@ inline int read()
 
 int main()
 {
-    n = read(), q = read();
+    n = read();
     for (int i = 1; i <= n; i++)
         a[i] = b[i] = read();
+    q = read();
+    for (int i = 1; i <= q; i++)
+        l[i] = read(), r[i] = read(), b[i + n] = k[i] = read();
     prework();
     for (int i = 1; i <= n; i++)
         T.modify(root[i], root[i - 1], 1, m, a[i]);
-    while (q--)
-    {
-        int l = read(), r = read(), k = read();        
-        printf("%d\n", b[T.query(root[l - 1], root[r], 1, m, k)]);
-    }
+    for (int i = 1; i <= q; i++)
+        printf("%d\n", T.query(root[l[i] - 1], root[r[i]], 1, m, k[i] + 1, m));
     return 0;
 }
