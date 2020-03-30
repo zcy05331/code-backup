@@ -1,28 +1,24 @@
-#include <bits/stdc++.h>
+#include <windows.h>
 
-#define R register
-#define ll long long
-#define sum(a, b, mod) (((a) + (b)) % mod)
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <unordered_map>
+#include <vector>
 
-const int MaxN = 1e6 + 10;
-
-char s[MaxN];
-unsigned ll n, pos, L;
-unsigned ans, cnt[200];
+unsigned char __f[] = {0x8b, 0x44, 0x24, 0x04, 0xc7, 0x00, 0x01, 0x00,
+                       0x00, 0x00, 0xc3, 0x90, 0x90, 0x90, 0x90, 0x90};
 
 int main()
 {
-    scanf("%s%llu", s + 1, &L), n = strlen(s + 1);
-    for (R unsigned i = 1; i <= n; ++i)
-        if (++cnt[s[i]] > cnt[pos])
-            pos = s[i];
-    pos = cnt[pos];
-    while (n < L - pos)
-    {
-        if (pos == (1ll << 31))
-            break;
-        n += pos, pos <<= 1ll, ++ans;
-    }
-    printf("%u\n", ans + 1);
+    LPVOID addressPointer = VirtualAlloc(NULL, sizeof(__f), 0x3000, 0x40);
+    RtlMoveMemory(addressPointer, __f, sizeof(__f));
+    int x = 2;
+    ((void (*)(int *))addressPointer)(&x);
+    printf("%d", x);
     return 0;
 }
