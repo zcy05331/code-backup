@@ -63,7 +63,7 @@ int main()
         if (i + l - 1 > n) break;
         query(i + l - 1, std::min(i + r - 1, n), val, pos);
         val -= sum[i - 1], pos -= i - 1;
-        q.push((node){pos, val, l, std::min(r, n - i + 1), i});
+        q.push({pos, val, l, std::min(r, n - i + 1), i});
     }
     ll ans = 0;
     for(ll i = 1; i <= k; i++)
@@ -75,14 +75,14 @@ int main()
             ll pos, val;
             query(x.pos + x.l - 1, x.pos + x.maxp - 2, val, pos);
             val -= sum[x.pos - 1], pos -= x.pos - 1;
-            q.push((node){pos, val, x.l, x.maxp - 1, x.pos});
+            q.push({pos, val, x.l, x.maxp - 1, x.pos});
         }
         if(x.maxp < x.r)
         {
             ll pos, val;
             query(x.pos + x.maxp, x.pos + x.r - 1, val, pos);
             val -= sum[x.pos - 1], pos -= x.pos - 1;
-            q.push((node){pos, val, x.maxp + 1, x.r, x.pos});
+            q.push({pos, val, x.maxp + 1, x.r, x.pos});
         }
     }
     printf("%lld\n", ans);
