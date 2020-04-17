@@ -1,58 +1,77 @@
 #include <bits/stdc++.h>
-const int MaxN = 100010;
-struct heap
+
+#define R register
+#define ll long long
+#define sum(a, b, mod) (((a) + (b)) % mod)
+
+const int MaxN = 2e5 + 10;
+
+struct node
 {
-    int ch[MaxN][2], val[MaxN], dis[MaxN], f[MaxN];
-    int merge(int x, int y)
-    {
-        if (x == 0 || y == 0)
-            return x + y;
-        if (val[x] > val[y] || (val[x] == val[y] && x > y))
-            std::swap(x, y);
-        ch[x][1] = merge(ch[x][1], y);
-        f[ch[x][1]] = x;
-        if (dis[ch[x][0]] < dis[ch[x][1]])
-            std::swap(ch[x][0], ch[x][1]);
-        dis[x] = dis[ch[x][1]] + 1;
-        return x;
-    }
-    int getf(int x)
-    {
-        while (f[x])
-            x = f[x];
-        return x;
-    }
-    void pop(int x)
-    {
-        val[x] = -1;
-        f[ch[x][0]] = f[ch[x][1]] = 0;
-        merge(ch[x][0], ch[x][1]);
-    }
-} T;
+    int ch[2];
+    int val, dep;
+};
+
+node t[MaxN];
+int n, m, f[MaxN];
+
+int getf(int x)
+{
+    if (x != f[x])
+        f[x] = getf(f[x]);
+    return f[x];
+}
+
+int merge(int x, int y)
+{
+    if (!x || !y) return x | y;
+    if (t[x].val < t[y].val) std::swap(x, y);
+    t[x].ch[1] = merge(t[x].ch[1], y);
+    if (t[t[x].ch[1]].dep > t[t[x].ch[0]].dep)
+        std::swap(t[x].ch[0], t[x].ch[1]);
+    t[x].dep = t[t[x].ch[1]].dep + 1;
+    return x;
+}
+
+inline int read()
+{
+    int x = 0;
+    char ch = getchar();
+    while (ch > '9' || ch < '0')
+        ch = getchar();
+    while (ch <= '9' && ch >= '0')
+        x = (x << 1) + (x << 3) + (ch ^ 48), ch = getchar();
+    return x;
+}
+
+int solve(int a, int b)
+{
+    a = getf(a), b = getf(b);
+    if (a == b) return -1;
+    int rt, art, brt;
+    t[a].val >>= 1, rt = merge(t[a].ch[0], t[a].ch[1]);
+    t[a].ch[0] = t[a].ch[1] = t[a].dep = 0, art = merge(rt, a), f[a] = f[rt] = art;
+    t[b].val >>= 1, rt = merge(t[b].ch[0], t[b].ch[1]);
+    t[b].ch[0] = t[b].ch[1] = t[b].dep = 0, brt = merge(rt, b), f[b] = f[rt] = brt;
+    rt = merge(art, brt), f[art] = f[brt] = rt;
+    return t[rt].val;
+}
 
 int main()
 {
-    int n, m;
-    scanf("%d", &n);
-    for (int i = 1; i <= n; i++)
-        scanf("%d", &T.val[i]), T.val[i] = -T.val[i];
-    scanf("%d", &m);
-    for (int i = 1; i <= m; i++)
+    while (scanf("%d", &n) == 1)
     {
-        int x, y;
-        scanf("%d%d", &x, &y);
-        int fx = T.getf(x), fy = T.getf(y);
-        if(fx == fy)
+        t[0].dep = -1;
+        for (int i = 1; i <= n; i++)
         {
-            printf("-1\n");
-            continue;
+            t[i].val = read(), f[i] = i;
+            t[i].dep = t[i].ch[0] = t[i].ch[1] = 0;
         }
-        else
+        m = read();
+        while (m--)
         {
-            T.val[fx] /= 2, T.val[fy] /= 2;
-            T.merge(fx, fy);
-            int fxy = T.getf(fy);
-            printf("%d\n", -T.val[fxy]);
+            int a = read(), b = read();
+            printf("%d\n", solve(a, b));
         }
     }
     return 0;

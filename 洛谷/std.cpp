@@ -1,55 +1,89 @@
-#include <bits/stdc++.h>
-#define lcy AKIOI
-#define ll long long
-const int inf = 0x3f3f3f3f;
-int n, ans = -inf;
-int a[105];
-int f[150][150], g[150][150];
-char c[105];
-int max(int x, int y) { return (x > y) ? (x) : (y); }
-int min(int x, int y) { return (x < y) ? (x) : (y); }
+#include <algorithm>
+#include <cctype>
+#include <cstdio>
+#include <iostream>
+
+using namespace std;
+
+int read()
+{
+    int out = 0;
+    char c;
+    while (!isdigit(c = getchar()))
+        ;
+    for (; isdigit(c); c = getchar())
+        out = out * 10 + c - '0';
+    return out;
+}
+
+const int N = 1000010;
+
+struct Node
+{
+    int val, ch[2], d;
+} t[N];
+
+int &rs(int x);
+int merge(int x, int y);
+
+int find(int x);
+
+int n, m, f[N];
+bool kill[N];
+char op[10];
+
 int main()
 {
-    scanf("%d\n", &n); //读入很诡异
-    for (int i = 1; i <= n; i++)
+    int i, x, y;
+
+    n = read();
+
+    for (i = 1; i <= n; ++i)
     {
-        scanf("%c %d", &c[i], &a[i]);
-        getchar();
-        a[n + i] = a[i];
-        c[n + i] = c[i]; //断环为链
+        t[i].val = read();
+        f[i] = i;
     }
-    for (int i = 1; i <= (n << 1); i++)
+
+    m = read();
+
+    while (m--)
     {
-        for (int j = 1; j <= (n << 1); j++)
+        scanf("%s", op);
+        if (op[0] == 'M')
         {
-            f[i][j] = -inf, g[i][j] = inf;
+            x = read();
+            y = read();
+            if (kill[x] || kill[y] || find(x) == find(y)) continue;
+            f[find(x)] = f[find(y)] = merge(find(x), find(y));
         }
-    }
-    for (int i = 1; i <= (n << 1); i++)
-        f[i][i] = g[i][i] = a[i];
-    for (int len = 2; len <= n; len++)
-    {
-        for (int i = 1, j = len; j <= (n << 1); i++, j++)
+        else
         {
-            for (int k = i; k < j; k++)
+            x = read();
+            if (!kill[x])
             {
-                if (c[k + 1] == 'x')
-                {
-                    f[i][j] = max(f[i][j], max(f[i][k] * f[k + 1][j], max(g[i][k] * g[k + 1][j], max(f[i][k] * g[k + 1][j], g[i][k] * f[k + 1][j]))));
-                    g[i][j] = min(g[i][j], min(f[i][k] * f[k + 1][j], min(g[i][k] * g[k + 1][j], min(f[i][k] * g[k + 1][j], g[i][k] * f[k + 1][j]))));
-                }
-                else if (c[k + 1] == 't')
-                {
-                    f[i][j] = max(f[i][j], f[i][k] + f[k + 1][j]);
-                    g[i][j] = min(g[i][j], g[i][k] + g[k + 1][j]);
-                }
+                x = find(x);
+                kill[x] = true;
+                f[x] = f[t[x].ch[0]] = f[t[x].ch[1]] = merge(t[x].ch[0], t[x].ch[1]);
+                // 由于堆中的点会 find 到 x，所以 f[x] 也要修改
+                printf("%d\n", t[x].val);
             }
+            else
+                puts("0");
         }
     }
-    for (int i = 1; i <= n; i++)
-        ans = max(ans, f[i][i + n - 1]);
-    printf("%d\n", ans);
-    for (int i = 1; i <= n; i++)
-        if (f[i][i + n - 1] == ans) printf("%d ", i);
+
     return 0;
 }
+
+int merge(int x, int y)
+{
+    if (!x || !y) return x | y;          // 若一个堆为空则返回另一个堆
+    if (t[x].val > t[y].val) swap(x, y); // 取值较小的作为根
+    t[x].rs = merge(t[x].rs, y);         // 递归合并右儿子与另一个堆
+    if (t[t[x].rs].d > t[t[x].ls].d)
+        swap(t[x].ls, t[x].rs); // 若不满足左偏性质则交换左右儿子
+    t[x].d = t[t[x].rs].d + 1;  // 更新dist
+    return x;
+}
+
+int find(int x) { return x == f[x] ? x : f[x] = find(f[x]); }
