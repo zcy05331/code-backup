@@ -1,33 +1,56 @@
 #include <bits/stdc++.h>
 
-# define ll long long
-const int MaxN = 100;
+#define R register
+#define ll long long
+#define sum(a, b, mod) (((a) + (b)) % mod)
 
-ll n, ans, a[MaxN], p[101];
+ll n, x;
 
-inline void work(ll x)
+struct LinearBasis
 {
-    for(int i = 62; i >= 0; i--)
+    ll d[70];
+    void add(ll x)
     {
-        if((x >> (1ll * i)) == 0)
-            continue;
-        if(!p[i])
+        for (int i = 60; ~i; i--)
         {
-            p[i] = x;
-            break;
+            if (x & (1ll << i))
+            {
+                if (d[i])
+                    x ^= d[i];
+                else
+                {
+                    d[i] = x;
+                    break;
+                }
+            }
         }
-        x ^= p[i];
     }
+    ll query()
+    {
+        ll ans = 0;
+        for(int i = 60; ~i; i--)
+            if((d[i] ^ ans) > ans)
+                ans ^= d[i];
+        return ans;
+    }
+} L;
+
+ll read()
+{
+    ll x = 0;
+    char ch = getchar();
+    while(ch > '9' || ch < '0')
+        ch = getchar();
+    while(ch <= '9' && ch >= '0') 
+        x = (x << 1) + (x << 3) + (ch ^ 48), ch = getchar();
+    return x;
 }
 
 int main()
 {
-    scanf("%lld", &n);
+    n = read();
     for(int i = 1; i <= n; i++)
-        scanf("%lld", &a[i]), work(a[i]);
-    for(int i = 62; i >= 0; i--)
-        if((ans ^ p[i]) > ans)
-            ans ^= p[i];
-    printf("%lld\n", ans);
+        L.add((x = read()));
+    printf("%lld\n", L.query());
     return 0;
 }
