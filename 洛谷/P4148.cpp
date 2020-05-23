@@ -41,27 +41,19 @@ struct KDTree
             U[x] = std::min(U[x], U[rc[x]]), D[x] = std::max(D[x], D[rc[x]]);
         }
     }
-    int build(int l, int r)
+    int build(int l, int r, int k)
     {
         if(l > r) return 0;
         int mid = (l + r) >> 1;
-        double avrx = 0, avry = 0, valx = 0, valy = 0;
-        for(int i = l; i <= r; i++)
-            avrx += t[g[i]].x, avry += t[g[i]].y;
-        avrx /= (r - l + 1), avry /= (r - l + 1);
-        for(int i = l; i <= r; i++)
-            valx += (avrx - t[g[i]].x) * (avrx - t[g[i]].x),
-                valy += (avry - t[g[i]].y) * (avry - t[g[i]].y);
-        if(valx > valy) 
-            std::nth_element(g + l, g + mid, g + r + 1, [&](int a, int b) { return t[a].x < t[b].x; }), d[g[mid]] = 1;
+        if(k)  std::nth_element(g + l, g + mid, g + r + 1, [&](int a, int b) { return t[a].x < t[b].x; }), d[g[mid]] = 1;
         else std::nth_element(g + l, g + mid, g + r + 1, [&](int a, int b) { return t[a].y < t[b].y; }), d[g[mid]] = 2;
-        lc[g[mid]] = build(l, mid - 1), rc[g[mid]] = build(mid + 1, r),  maintain(g[mid]);
+        lc[g[mid]] = build(l, mid - 1, k ^ 1), rc[g[mid]] = build(mid + 1, r, k ^ 1),  maintain(g[mid]);
         return g[mid];
     }
     void restore(int &x)
     {
         cnt = 0, dfs(x);
-        x = build(1, cnt);
+        x = build(1, cnt, 0);
     }
     bool bad(int x) { return (delta * size[x]) <= (double) std::max(size[lc[x]], size[rc[x]]); }
     void insert(int &x, int u)

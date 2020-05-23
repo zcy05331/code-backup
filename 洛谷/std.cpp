@@ -1,123 +1,148 @@
-#include <algorithm>
-#include <cstdio>
-#include <cstring>
+#include <bits/stdc++.h>
+#define N 500005
+#define inf 1000000000
 using namespace std;
-const int maxn = 200010;
-int n, op, xl, xr, yl, yr, lstans;
-struct node
+int x[N], y[N];
+int n, f, rt, m, ans;
+struct Point
 {
-    int x, y, v;
-} s[maxn];
-bool cmp1(int a, int b) { return s[a].x < s[b].x; }
-bool cmp2(int a, int b) { return s[a].y < s[b].y; }
-double a = 0.725;
-int rt, cur, d[maxn], lc[maxn], rc[maxn], L[maxn], R[maxn], D[maxn], U[maxn],
-    siz[maxn], sum[maxn];
-int g[maxn], t;
-void print(int x)
+    int d[2], maxv[2], minv[2], l, r;
+    int &operator[](int x) { return d[x]; }
+    friend bool operator<(Point a, Point b) { return a[f] < b[f]; }
+    friend int querydis(Point a, Point b) { return abs(a[1] - b[1]) + abs(a[0] - b[0]); }
+} p[N];
+struct K_D_Tree
 {
-    if (!x) return;
-    print(lc[x]);
-    g[++t] = x;
-    print(rc[x]);
-}
-void maintain(int x)
-{
-    siz[x] = siz[lc[x]] + siz[rc[x]] + 1;
-    sum[x] = sum[lc[x]] + sum[rc[x]] + s[x].v;
-    L[x] = R[x] = s[x].x;
-    D[x] = U[x] = s[x].y;
-    if (lc[x])
-        L[x] = min(L[x], L[lc[x]]), R[x] = max(R[x], R[lc[x]]),
-        D[x] = min(D[x], D[lc[x]]), U[x] = max(U[x], U[lc[x]]);
-    if (rc[x])
-        L[x] = min(L[x], L[rc[x]]), R[x] = max(R[x], R[rc[x]]),
-        D[x] = min(D[x], D[rc[x]]), U[x] = max(U[x], U[rc[x]]);
-}
-int build(int l, int r)
-{
-    if (l > r) return 0;
-    int mid = (l + r) >> 1;
-    double av1 = 0, av2 = 0, va1 = 0, va2 = 0;
-    for (int i = l; i <= r; i++)
-        av1 += s[g[i]].x, av2 += s[g[i]].y;
-    av1 /= (r - l + 1);
-    av2 /= (r - l + 1);
-    for (int i = l; i <= r; i++)
-        va1 += (av1 - s[g[i]].x) * (av1 - s[g[i]].x),
-            va2 += (av2 - s[g[i]].y) * (av2 - s[g[i]].y);
-    if (va1 > va2)
-        nth_element(g + l, g + mid, g + r + 1, cmp1), d[g[mid]] = 1;
-    else
-        nth_element(g + l, g + mid, g + r + 1, cmp2), d[g[mid]] = 2;
-    lc[g[mid]] = build(l, mid - 1);
-    rc[g[mid]] = build(mid + 1, r);
-    maintain(g[mid]);
-    return g[mid];
-}
-void rebuild(int &x)
-{
-    t = 0;
-    print(x);
-    x = build(1, t);
-}
-bool bad(int x) { return a * siz[x] <= (double)max(siz[lc[x]], siz[rc[x]]); }
-void insert(int &x, int v)
-{
-    if (!x)
+    Point t[N], T;
+    int ans;
+    void pushup(int x)
     {
-        x = v;
-        maintain(x);
-        return;
+        int l = t[x].l, r = t[x].r;
+        for (int i = 0; i <= 1; i++)
+        {
+            t[x].minv[i] = t[x].maxv[i] = t[x][i];
+            if (l)
+            {
+                t[x].minv[i] = min(t[x].minv[i], t[l].minv[i]);
+                t[x].maxv[i] = max(t[x].maxv[i], t[l].maxv[i]);
+            }
+            if (r)
+            {
+                t[x].minv[i] = min(t[x].minv[i], t[r].minv[i]);
+                t[x].maxv[i] = max(t[x].maxv[i], t[r].maxv[i]);
+            }
+        }
     }
-    if (d[x] == 1)
+    int build(int l, int r, int f)
     {
-        if (s[v].x <= s[x].x)
-            insert(lc[x], v);
+        int mid = (l + r) >> 1;
+        nth_element(p + l, p + mid, p + r + 1);
+        t[mid] = p[mid];
+        for (int i = 0; i <= 1; i++)
+            t[mid].minv[i] = t[mid].maxv[i] = t[mid][i];
+        if (l < mid) t[mid].l = build(l, mid - 1, f ^ 1);
+        if (r > mid) t[mid].r = build(mid + 1, r, f ^ 1);
+        pushup(mid);
+        return mid;
+    }
+    int getmin(Point a)
+    {
+        int ans = 0;
+        for (int i = 0; i <= 1; i++)
+        {
+            ans += max(T[i] - a.maxv[i], 0);
+            ans += max(a.minv[i] - T[i], 0);
+        }
+        return ans;
+    }
+    int getmax(Point a)
+    {
+        int ans = 0;
+        for (int i = 0; i <= 1; i++)
+        {
+            ans += max(abs(T[i] - a.maxv[i]), abs(T[i] - a.minv[i]));
+        }
+        return ans;
+    }
+    void querymax(int x)
+    {
+        ans = max(ans, querydis(t[x], T));
+        int l = t[x].l, r = t[x].r, dl = -inf, dr = -inf;
+        if (l) dl = getmax(t[l]);
+        if (r) dr = getmax(t[r]);
+        if (dl > dr)
+        {
+            if (dl > ans) querymax(l);
+            if (dr > ans) querymax(r);
+        }
         else
-            insert(rc[x], v);
+        {
+            if (dr > ans) querymax(r);
+            if (dl > ans) querymax(l);
+        }
     }
-    else
+    void querymin(int x)
     {
-        if (s[v].y <= s[x].y)
-            insert(lc[x], v);
+        int tmp = querydis(T, t[x]);
+        if (tmp) ans = min(ans, tmp);
+        int l = t[x].l, r = t[x].r, dl = inf, dr = inf;
+        if (l) dl = getmin(t[l]);
+        if (r) dr = getmin(t[r]);
+        if (dl < dr)
+        {
+            if (dl < ans) querymin(l);
+            if (dr < ans) querymin(r);
+        }
         else
-            insert(rc[x], v);
+        {
+            if (dr < ans) querymin(r);
+            if (dl < ans) querymin(l);
+        }
     }
-    maintain(x);
-    if (bad(x)) rebuild(x);
-}
-int query(int x)
+    int query(int f, int x, int y)
+    {
+        T[0] = x;
+        T[1] = y;
+        if (!f)
+            ans = inf, querymin(rt);
+        else
+            ans = -inf, querymax(rt);
+        return ans;
+    }
+} kd;
+inline int read()
 {
-    if (!x || xr < L[x] || xl > R[x] || yr < D[x] || yl > U[x]) return 0;
-    if (xl <= L[x] && R[x] <= xr && yl <= D[x] && U[x] <= yr) return sum[x];
-    int ret = 0;
-    if (xl <= s[x].x && s[x].x <= xr && yl <= s[x].y && s[x].y <= yr)
-        ret += s[x].v;
-    return query(lc[x]) + query(rc[x]) + ret;
+    int f = 1, x = 0;
+    char ch;
+    do
+    {
+        ch = getchar();
+        if (ch == '-') f = -1;
+    } while (ch < '0' || ch > '9');
+    do
+    {
+        x = x * 10 + ch - '0';
+        ch = getchar();
+    } while (ch >= '0' && ch <= '9');
+    return f * x;
 }
 int main()
 {
-    scanf("%d", &n);
-    while (~scanf("%d", &op))
+    n = read();
+    ans = inf;
+    for (int i = 1; i <= n; i++)
     {
-        if (op == 1)
-        {
-            cur++, scanf("%d%d%d", &s[cur].x, &s[cur].y, &s[cur].v);
-            s[cur].x ^= lstans;
-            s[cur].y ^= lstans;
-            s[cur].v ^= lstans;
-            insert(rt, cur);
-        }
-        if (op == 2)
-        {
-            scanf("%d%d%d%d", &xl, &yl, &xr, &yr);
-            xl ^= lstans;
-            yl ^= lstans;
-            xr ^= lstans;
-            yr ^= lstans;
-            printf("%d\n", lstans = query(rt));
-        }
-        if (op == 3) return 0;
+        x[i] = read();
+        y[i] = read();
+        p[i][0] = x[i];
+        p[i][1] = y[i];
     }
+    rt = kd.build(1, n, 0);
+    for (int i = 1; i <= n; i++)
+    {
+        int minv = kd.query(0, x[i], y[i]), maxv = kd.query(1, x[i], y[i]);
+        ans = min(ans, maxv - minv);
+    }
+    printf("%d\n", ans);
+    return 0;
 }
