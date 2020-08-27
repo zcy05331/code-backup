@@ -136,6 +136,8 @@ inline int read()
 
 int main()
 {
+    freopen("P2617_11.in", "r", stdin);
+    freopen("P2617.out", "w", stdout);
     char op[2];
     srand(19260817);
     n = read(), m = read();
@@ -148,7 +150,8 @@ int main()
         if (op[1] == 'Q')
         {
             int l = read(), r = read(), k = read();
-            write(T.query_val(l, r, k)), puts("");
+            // write(T.query_val(l, r, k)), puts("");
+            printf("%d\n", T.query_val(l, r, k));
         }
         else
         {
@@ -156,5 +159,6 @@ int main()
             T.modify(1, x, y), a[x] = y;
         }
     }
+    std::cerr << clock();
     return 0;
 }
