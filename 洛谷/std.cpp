@@ -1,148 +1,95 @@
 #include <bits/stdc++.h>
-#define N 500005
-#define inf 1000000000
 using namespace std;
-int x[N], y[N];
-int n, f, rt, m, ans;
-struct Point
-{
-    int d[2], maxv[2], minv[2], l, r;
-    int &operator[](int x) { return d[x]; }
-    friend bool operator<(Point a, Point b) { return a[f] < b[f]; }
-    friend int querydis(Point a, Point b) { return abs(a[1] - b[1]) + abs(a[0] - b[0]); }
-} p[N];
-struct K_D_Tree
-{
-    Point t[N], T;
-    int ans;
-    void pushup(int x)
-    {
-        int l = t[x].l, r = t[x].r;
-        for (int i = 0; i <= 1; i++)
-        {
-            t[x].minv[i] = t[x].maxv[i] = t[x][i];
-            if (l)
-            {
-                t[x].minv[i] = min(t[x].minv[i], t[l].minv[i]);
-                t[x].maxv[i] = max(t[x].maxv[i], t[l].maxv[i]);
-            }
-            if (r)
-            {
-                t[x].minv[i] = min(t[x].minv[i], t[r].minv[i]);
-                t[x].maxv[i] = max(t[x].maxv[i], t[r].maxv[i]);
-            }
-        }
-    }
-    int build(int l, int r, int f)
-    {
-        int mid = (l + r) >> 1;
-        nth_element(p + l, p + mid, p + r + 1);
-        t[mid] = p[mid];
-        for (int i = 0; i <= 1; i++)
-            t[mid].minv[i] = t[mid].maxv[i] = t[mid][i];
-        if (l < mid) t[mid].l = build(l, mid - 1, f ^ 1);
-        if (r > mid) t[mid].r = build(mid + 1, r, f ^ 1);
-        pushup(mid);
-        return mid;
-    }
-    int getmin(Point a)
-    {
-        int ans = 0;
-        for (int i = 0; i <= 1; i++)
-        {
-            ans += max(T[i] - a.maxv[i], 0);
-            ans += max(a.minv[i] - T[i], 0);
-        }
-        return ans;
-    }
-    int getmax(Point a)
-    {
-        int ans = 0;
-        for (int i = 0; i <= 1; i++)
-        {
-            ans += max(abs(T[i] - a.maxv[i]), abs(T[i] - a.minv[i]));
-        }
-        return ans;
-    }
-    void querymax(int x)
-    {
-        ans = max(ans, querydis(t[x], T));
-        int l = t[x].l, r = t[x].r, dl = -inf, dr = -inf;
-        if (l) dl = getmax(t[l]);
-        if (r) dr = getmax(t[r]);
-        if (dl > dr)
-        {
-            if (dl > ans) querymax(l);
-            if (dr > ans) querymax(r);
-        }
-        else
-        {
-            if (dr > ans) querymax(r);
-            if (dl > ans) querymax(l);
-        }
-    }
-    void querymin(int x)
-    {
-        int tmp = querydis(T, t[x]);
-        if (tmp) ans = min(ans, tmp);
-        int l = t[x].l, r = t[x].r, dl = inf, dr = inf;
-        if (l) dl = getmin(t[l]);
-        if (r) dr = getmin(t[r]);
-        if (dl < dr)
-        {
-            if (dl < ans) querymin(l);
-            if (dr < ans) querymin(r);
-        }
-        else
-        {
-            if (dr < ans) querymin(r);
-            if (dl < ans) querymin(l);
-        }
-    }
-    int query(int f, int x, int y)
-    {
-        T[0] = x;
-        T[1] = y;
-        if (!f)
-            ans = inf, querymin(rt);
-        else
-            ans = -inf, querymax(rt);
-        return ans;
-    }
-} kd;
+#define re unsigned
+const int B = 400;
+int n, m, a[100002], f[402][100002], g[402], bl[100002], st[100002], ed[100002], d[100002], b[402][402], p[402][402], s[402][402], c[402], len[402], f1[402][100002], h[402][402];
+long long la;
 inline int read()
 {
-    int f = 1, x = 0;
-    char ch;
-    do
-    {
-        ch = getchar();
-        if (ch == '-') f = -1;
-    } while (ch < '0' || ch > '9');
-    do
-    {
-        x = x * 10 + ch - '0';
-        ch = getchar();
-    } while (ch >= '0' && ch <= '9');
-    return f * x;
+    re long long t = 0;
+    re char v = getchar();
+    while (v < '0')
+        v = getchar();
+    while (v >= '0')
+        t = (t << 3) + (t << 1) + v - 48, v = getchar();
+    return t;
 }
-int main()
+inline void add(re int x)
 {
-    n = read();
-    ans = inf;
-    for (int i = 1; i <= n; i++)
+    for (re int i = bl[x] + 1; i <= bl[n]; ++i)
+        ++g[i];
+    for (re int i = x + 1; i <= ed[bl[x]]; ++i)
+        ++d[i];
+}
+inline int cmp(re int x, re int y) { return a[x] < a[y]; }
+inline int ask(re int x) { return g[bl[x]] + d[x]; }
+inline int ask(re int x, re int l1, re int r1, re int y, re int l2, re int r2)
+{
+    re int l = 1, r = 1, sum = 0, sr = 0;
+    while (l <= len[x] && r <= len[y])
     {
-        x[i] = read();
-        y[i] = read();
-        p[i][0] = x[i];
-        p[i][1] = y[i];
+        if (b[x][l] < l1 || b[x][l] > r1)
+        {
+            ++l;
+            continue;
+        }
+        if (b[y][r] < l2 || b[y][r] > r2)
+        {
+            ++r;
+            continue;
+        }
+        if (a[b[x][l]] < a[b[y][r]])
+            ++l, sum += sr;
+        else
+            ++r, ++sr;
     }
-    rt = kd.build(1, n, 0);
-    for (int i = 1; i <= n; i++)
+    while (l <= len[x])
+        if (b[x][l] >= l1 && b[x][l] <= r1)
+            sum += sr, ++l;
+        else
+            ++l;
+    return sum;
+}
+signed main()
+{
+    freopen("sqrt.in", "r", stdin);
+    freopen("sqrt.out", "w", stdout);
+    n = read(), m = read();
+    for (re int i = 1; i <= n; ++i)
+        a[i] = read(), bl[i] = (i - 1) / B + 1, ed[bl[i]] = i, (!st[bl[i]]) && (st[bl[i]] = i);
+    for (re int i = 1; i <= bl[n]; ++i)
     {
-        int minv = kd.query(0, x[i], y[i]), maxv = kd.query(1, x[i], y[i]);
-        ans = min(ans, maxv - minv);
+        re int cnt = 0;
+        memset(g, 0, sizeof(g)), memset(d, 0, sizeof(d)), len[i] = ed[i] - st[i] + 1;
+        for (re int j = st[i]; j <= ed[i]; ++j)
+            b[i][++cnt] = j, p[i][cnt] = p[i][cnt - 1] + cnt - 1 - ask(a[j]), add(a[j]);
+        for (re int j = 1; j < st[i]; ++j)
+            f[i][j] = f[i][j - 1] + ask(a[j]);
+        memset(g, 0, sizeof(g)), memset(d, 0, sizeof(d)), cnt = 0;
+        for (re int j = ed[i]; j >= st[i]; --j)
+            ++cnt, s[i][cnt] = s[i][cnt - 1] + ask(a[j]), add(a[j]);
+        for (re int j = n; j > ed[i]; --j)
+            f1[i][j] = f1[i][j + 1] + len[i] - ask(a[j]);
+        sort(b[i] + 1, b[i] + cnt + 1, cmp), c[i] = s[i][len[i]];
+        for (re int j = 1; j < i; ++j)
+            for (re int k = st[j]; k <= ed[j]; ++k)
+                h[j][i] += ask(a[k]);
     }
-    printf("%d\n", ans);
-    return 0;
+    for (re int i = 1; i <= bl[n]; ++i)
+        for (re int j = bl[n]; j >= i; --j)
+            h[i][j] += h[i][j + 1];
+    while (m--)
+    {
+        re int l = read(), r = read(), x = bl[l], y = bl[r];
+        if (x == y)
+            printf("%lld\n", la = p[x][r - st[x] + 1] - p[x][l - st[x]] - ask(x, st[x], l - 1, x, l, r));
+        else
+        {
+            la = s[x][ed[x] - l + 1] + p[y][r - st[y] + 1] + ask(x, l, ed[x], y, st[y], r);
+            for (re int i = x + 1; i < y; ++i)
+                la += c[i] + f[i][st[i] - 1] + f1[i][ed[i] + 1] - f[i][l - 1] - f1[i][r + 1] - h[i][i + 1] + h[i][y];
+            printf("%lld\n", la);
+        }
+    }
+    fprintf(stderr, "used %d ms\n", clock());
 }

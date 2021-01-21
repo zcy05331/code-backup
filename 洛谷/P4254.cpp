@@ -2,14 +2,17 @@
 
 #define R register
 #define ll long long
+#define meow(cat...) fprintf(stderr, cat)
 #define sum(a, b, mod) (((a) + (b)) % mod)
 
 const int MaxN = 1e6 + 10;
 
 int n;
+
 struct SegmentTree
 {
-    int cnt, k[MaxN << 2], b[MaxN << 2], tag[MaxN << 2];
+    int cnt, tag[MaxN << 2];
+    double k[MaxN << 2], b[MaxN << 2];
     double val(int x, int id) { return k[id] * (x - 1) + b[id]; }
     void insert(double K, double B)
     {
@@ -54,10 +57,10 @@ struct SegmentTree
     }
 } T;
 
-int main()
+signed main()
 {
     scanf("%d", &n);
-    while (n--)
+    for (int i = 1; i <= n; i++)
     {
         char op[10];
         scanf("%s", op);
@@ -70,8 +73,8 @@ int main()
         else
         {
             int x;
-            double ans;
-            scanf("%d", x), ans = T.query(1, 1, MaxN, x);
+            scanf("%d", &x);
+            double ans = T.query(1, 1, MaxN, x);
             printf("%d\n", (int)ans / 100);
         }
     }
