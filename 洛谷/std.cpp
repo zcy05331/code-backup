@@ -1,95 +1,202 @@
-#include <bits/stdc++.h>
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
+#include <queue>
 using namespace std;
-#define re unsigned
-const int B = 400;
-int n, m, a[100002], f[402][100002], g[402], bl[100002], st[100002], ed[100002], d[100002], b[402][402], p[402][402], s[402][402], c[402], len[402], f1[402][100002], h[402][402];
-long long la;
-inline int read()
+const int maxn = 100010;
+const int inf = 2e9;
+int n, a, b, m, x, col[maxn];
+// 0 off 1 on
+char op;
+int cur, h[maxn * 2], nxt[maxn * 2], p[maxn * 2];
+void add_edge(int x, int y)
 {
-    re long long t = 0;
-    re char v = getchar();
-    while (v < '0')
-        v = getchar();
-    while (v >= '0')
-        t = (t << 3) + (t << 1) + v - 48, v = getchar();
-    return t;
+    cur++;
+    nxt[cur] = h[x];
+    h[x] = cur;
+    p[cur] = y;
 }
-inline void add(re int x)
+bool vis[maxn];
+int rt, sum, siz[maxn], maxx[maxn], fa[maxn], dep[maxn];
+void calcsiz(int x, int f)
 {
-    for (re int i = bl[x] + 1; i <= bl[n]; ++i)
-        ++g[i];
-    for (re int i = x + 1; i <= ed[bl[x]]; ++i)
-        ++d[i];
-}
-inline int cmp(re int x, re int y) { return a[x] < a[y]; }
-inline int ask(re int x) { return g[bl[x]] + d[x]; }
-inline int ask(re int x, re int l1, re int r1, re int y, re int l2, re int r2)
-{
-    re int l = 1, r = 1, sum = 0, sr = 0;
-    while (l <= len[x] && r <= len[y])
-    {
-        if (b[x][l] < l1 || b[x][l] > r1)
+    siz[x] = 1;
+    maxx[x] = 0;
+    for (int j = h[x]; j; j = nxt[j])
+        if (p[j] != f && !vis[p[j]])
         {
-            ++l;
-            continue;
+            calcsiz(p[j], x);
+            siz[x] += siz[p[j]];
+            maxx[x] = max(maxx[x], siz[p[j]]);
         }
-        if (b[y][r] < l2 || b[y][r] > r2)
-        {
-            ++r;
-            continue;
-        }
-        if (a[b[x][l]] < a[b[y][r]])
-            ++l, sum += sr;
-        else
-            ++r, ++sr;
-    }
-    while (l <= len[x])
-        if (b[x][l] >= l1 && b[x][l] <= r1)
-            sum += sr, ++l;
-        else
-            ++l;
-    return sum;
+    maxx[x] = max(maxx[x], sum - siz[x]);
+    if (maxx[x] < maxx[rt])
+        rt = x;
 }
-signed main()
+struct heap
 {
-    freopen("sqrt.in", "r", stdin);
-    freopen("sqrt.out", "w", stdout);
-    n = read(), m = read();
-    for (re int i = 1; i <= n; ++i)
-        a[i] = read(), bl[i] = (i - 1) / B + 1, ed[bl[i]] = i, (!st[bl[i]]) && (st[bl[i]] = i);
-    for (re int i = 1; i <= bl[n]; ++i)
+    priority_queue<int> A, B; // heap=A-B
+    void insert(int x) { A.push(x); }
+    void erase(int x) { B.push(x); }
+    int top()
     {
-        re int cnt = 0;
-        memset(g, 0, sizeof(g)), memset(d, 0, sizeof(d)), len[i] = ed[i] - st[i] + 1;
-        for (re int j = st[i]; j <= ed[i]; ++j)
-            b[i][++cnt] = j, p[i][cnt] = p[i][cnt - 1] + cnt - 1 - ask(a[j]), add(a[j]);
-        for (re int j = 1; j < st[i]; ++j)
-            f[i][j] = f[i][j - 1] + ask(a[j]);
-        memset(g, 0, sizeof(g)), memset(d, 0, sizeof(d)), cnt = 0;
-        for (re int j = ed[i]; j >= st[i]; --j)
-            ++cnt, s[i][cnt] = s[i][cnt - 1] + ask(a[j]), add(a[j]);
-        for (re int j = n; j > ed[i]; --j)
-            f1[i][j] = f1[i][j + 1] + len[i] - ask(a[j]);
-        sort(b[i] + 1, b[i] + cnt + 1, cmp), c[i] = s[i][len[i]];
-        for (re int j = 1; j < i; ++j)
-            for (re int k = st[j]; k <= ed[j]; ++k)
-                h[j][i] += ask(a[k]);
+        while (!B.empty() && A.top() == B.top())
+            A.pop(), B.pop();
+        return A.top();
     }
-    for (re int i = 1; i <= bl[n]; ++i)
-        for (re int j = bl[n]; j >= i; --j)
-            h[i][j] += h[i][j + 1];
+    void pop()
+    {
+        while (!B.empty() && A.top() == B.top())
+            A.pop(), B.pop();
+        A.pop();
+    }
+    int top2()
+    {
+        int t = top(), ret;
+        pop();
+        ret = top();
+        A.push(t);
+        return ret;
+    }
+    int size() { return A.size() - B.size(); }
+} dist[maxn], ch[maxn], ans;
+void dfs(int x, int f, int d, heap &y)
+{
+    y.insert(d);
+    for (int j = h[x]; j; j = nxt[j])
+        if (p[j] != f && !vis[p[j]])
+            dfs(p[j], x, d + 1, y);
+}
+void pre(int x)
+{
+    vis[x] = true;
+    for (int j = h[x]; j; j = nxt[j])
+        if (!vis[p[j]])
+        {
+            rt = 0;
+            maxx[rt] = inf;
+            sum = siz[p[j]];
+            calcsiz(p[j], -1);
+            calcsiz(rt, -1);
+            fa[rt] = x;
+            dfs(p[j], -1, 1, dist[rt]);
+            ch[x].insert(dist[rt].top());
+            dep[rt] = dep[x] + 1;
+            pre(rt);
+        }
+    ch[x].insert(0);
+    if (ch[x].size() >= 2)
+        ans.insert(ch[x].top() + ch[x].top2());
+    else if (ch[x].size())
+        ans.insert(ch[x].top());
+}
+struct LCA
+{
+    int dep[maxn], lg[maxn], fa[maxn][20];
+    void dfs(int x, int f)
+    {
+        for (int j = h[x]; j; j = nxt[j])
+            if (p[j] != f)
+                dep[p[j]] = dep[x] + 1, fa[p[j]][0] = x, dfs(p[j], x);
+    }
+    void init()
+    {
+        dfs(1, -1);
+        for (int i = 2; i <= n; i++)
+            lg[i] = lg[i / 2] + 1;
+        for (int j = 1; j <= lg[n]; j++)
+            for (int i = 1; i <= n; i++)
+                fa[i][j] = fa[fa[i][j - 1]][j - 1];
+    }
+    int query(int x, int y)
+    {
+        if (dep[x] > dep[y])
+            swap(x, y);
+        int k = dep[y] - dep[x];
+        for (int i = 0; k; k = k / 2, i++)
+            if (k & 1)
+                y = fa[y][i];
+        if (x == y)
+            return x;
+        k = dep[x];
+        for (int i = lg[k]; i >= 0; i--)
+            if (fa[x][i] != fa[y][i])
+                x = fa[x][i], y = fa[y][i];
+        return fa[x][0];
+    }
+    int dist(int x, int y) { return dep[x] + dep[y] - 2 * dep[query(x, y)]; }
+} lca;
+int d[maxn][20];
+int main()
+{
+    scanf("%d", &n);
+    for (int i = 1; i < n; i++)
+        scanf("%d%d", &a, &b), add_edge(a, b), add_edge(b, a);
+    lca.init();
+    rt = 0;
+    maxx[rt] = inf;
+    sum = n;
+    calcsiz(1, -1);
+    calcsiz(rt, -1);
+    pre(rt);
+    // for(int i=1;i<=n;i++)printf("%d ",fa[i]);printf("\n");
+    for (int i = 1; i <= n; i++)
+        for (int j = i; j; j = fa[j])
+            d[i][dep[i] - dep[j]] = lca.dist(i, j);
+    scanf("%d", &m);
     while (m--)
     {
-        re int l = read(), r = read(), x = bl[l], y = bl[r];
-        if (x == y)
-            printf("%lld\n", la = p[x][r - st[x] + 1] - p[x][l - st[x]] - ask(x, st[x], l - 1, x, l, r));
+        scanf(" %c", &op);
+        if (op == 'G')
+        {
+            if (ans.size())
+                printf("%d\n", ans.top());
+            else
+                printf("-1\n");
+        }
         else
         {
-            la = s[x][ed[x] - l + 1] + p[y][r - st[y] + 1] + ask(x, l, ed[x], y, st[y], r);
-            for (re int i = x + 1; i < y; ++i)
-                la += c[i] + f[i][st[i] - 1] + f1[i][ed[i] + 1] - f[i][l - 1] - f1[i][r + 1] - h[i][i + 1] + h[i][y];
-            printf("%lld\n", la);
+            scanf("%d", &x);
+            if (!col[x])
+            {
+                if (ch[x].size() >= 2)
+                    ans.erase(ch[x].top() + ch[x].top2());
+                ch[x].erase(0);
+                if (ch[x].size() >= 2)
+                    ans.insert(ch[x].top() + ch[x].top2());
+                for (int i = x; fa[i]; i = fa[i])
+                {
+                    if (ch[fa[i]].size() >= 2)
+                        ans.erase(ch[fa[i]].top() + ch[fa[i]].top2());
+                    ch[fa[i]].erase(dist[i].top());
+                    dist[i].erase(d[x][dep[x] - dep[fa[i]]]);
+                    if (dist[i].size())
+                        ch[fa[i]].insert(dist[i].top());
+                    if (ch[fa[i]].size() >= 2)
+                        ans.insert(ch[fa[i]].top() + ch[fa[i]].top2());
+                }
+            }
+            else
+            {
+                if (ch[x].size() >= 2)
+                    ans.erase(ch[x].top() + ch[x].top2());
+                ch[x].insert(0);
+                if (ch[x].size() >= 2)
+                    ans.insert(ch[x].top() + ch[x].top2());
+                for (int i = x; fa[i]; i = fa[i])
+                {
+                    if (ch[fa[i]].size() >= 2)
+                        ans.erase(ch[fa[i]].top() + ch[fa[i]].top2());
+                    if (dist[i].size())
+                        ch[fa[i]].erase(dist[i].top());
+                    dist[i].insert(d[x][dep[x] - dep[fa[i]]]);
+                    ch[fa[i]].insert(dist[i].top());
+                    if (ch[fa[i]].size() >= 2)
+                        ans.insert(ch[fa[i]].top() + ch[fa[i]].top2());
+                }
+            }
+            col[x] ^= 1;
         }
     }
-    fprintf(stderr, "used %d ms\n", clock());
+    return 0;
 }
