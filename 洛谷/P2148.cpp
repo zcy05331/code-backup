@@ -9,8 +9,15 @@ const int MaxN = 1e5 + 10;
 
 int n, sum, a[MaxN];
 
-int lowbit(int x) { return x & (-x); }
-int f(int x, int y) { return lowbit(((x - 1) | (y - 1)) + 1); }
+int lowbit(int x) 
+{ 
+    int z = 0;
+    while(x & 1)
+        x >>= 1, z++;
+    return z;
+}
+
+int f(int x, int y) { return lowbit((x - 1) | (y - 1)); }
 
 inline int read()
 {
@@ -32,7 +39,7 @@ signed main()
         for (int i = 1; i <= n; i++)
             a[i] = read();
         for (int i = 1; i <= n; i += 2)
-            sum ^= f(a[i], a[i + 1]), meow("%d ", f(a[i], a[i + 1]));
+            sum ^= f(a[i], a[i + 1]);
         puts(sum ? "YES" : "NO");
     }
     return 0;
