@@ -1,202 +1,146 @@
+#include "swap.h"
+
 #include <algorithm>
 #include <cstdio>
-#include <cstring>
-#include <queue>
+#include <vector>
+
 using namespace std;
-const int maxn = 100010;
-const int inf = 2e9;
-int n, a, b, m, x, col[maxn];
-// 0 off 1 on
-char op;
-int cur, h[maxn * 2], nxt[maxn * 2], p[maxn * 2];
-void add_edge(int x, int y)
+
+struct BCJ
 {
-    cur++;
-    nxt[cur] = h[x];
-    h[x] = cur;
-    p[cur] = y;
+    int fa[500000];
+    void init(int n)
+    {
+        for (int i = 0; i < n; i++)
+            fa[i] = i;
+    }
+    int fnd(int x) { return x == fa[x] ? x : fa[x] = fnd(fa[x]); }
+} B;
+
+struct e
+{
+    int u, v, w;
+    e(int uu = 0, int vv = 0, int ww = 0) : u(uu), v(vv), w(ww) {}
+};
+vector<e> ed;
+bool operator<(e a, e b) { return a.w < b.w; }
+
+bool conn[500000];
+int st[500000], en[500000], rt[500000];
+vector<int> pnt[500000];
+
+vector<int> tr[500000];
+
+int fa[500000][20], dep[500000];
+
+void dfs(int u, int f)
+{
+    fa[u][0] = f;
+    for (int i = 1; i < 20; i++)
+        fa[u][i] = fa[u][i - 1] == -1 ? -1 : fa[fa[u][i - 1]][i - 1];
+    rt[u] = f == -1 ? u : rt[f], dep[u] = f == -1 ? 1 : dep[f] + 1;
+    for (int i = 0; i < tr[u].size(); i++)
+        dfs(tr[u][i], u);
 }
-bool vis[maxn];
-int rt, sum, siz[maxn], maxx[maxn], fa[maxn], dep[maxn];
-void calcsiz(int x, int f)
+
+int LCA(int x, int y)
 {
-    siz[x] = 1;
-    maxx[x] = 0;
-    for (int j = h[x]; j; j = nxt[j])
-        if (p[j] != f && !vis[p[j]])
+    if (rt[x] != rt[y]) return -1;
+    if (dep[x] < dep[y]) swap(x, y);
+    for (int i = 19; i >= 0; i--)
+    {
+        if (fa[x][i] != -1 && dep[fa[x][i]] >= dep[y]) x = fa[x][i];
+    }
+    if (x == y) return x;
+    for (int i = 19; i >= 0; i--)
+    {
+        if (fa[x][i] != fa[y][i]) x = fa[x][i], y = fa[y][i];
+    }
+    return fa[x][0];
+}
+int n, m;
+void init(int N, int M, vector<int> U, vector<int> V, vector<int> W)
+{
+    n = N, m = M;
+    for (int i = 0; i < M; i++)
+        ed.push_back(e(U[i], V[i], W[i]));
+    sort(ed.begin(), ed.end());
+    B.init(N);
+    for (int i = 0; i < N; i++)
+        st[i] = en[i] = rt[i] = i, pnt[i].push_back(i);
+    for (int i = 0; i < M; i++)
+    {
+        int u = ed[i].u, v = ed[i].v, fu = B.fnd(u), fv = B.fnd(v);
+        if (pnt[fu].size() < pnt[fv].size())
         {
-            calcsiz(p[j], x);
-            siz[x] += siz[p[j]];
-            maxx[x] = max(maxx[x], siz[p[j]]);
+            swap(u, v), swap(fu, fv);
         }
-    maxx[x] = max(maxx[x], sum - siz[x]);
-    if (maxx[x] < maxx[rt])
-        rt = x;
-}
-struct heap
-{
-    priority_queue<int> A, B; // heap=A-B
-    void insert(int x) { A.push(x); }
-    void erase(int x) { B.push(x); }
-    int top()
-    {
-        while (!B.empty() && A.top() == B.top())
-            A.pop(), B.pop();
-        return A.top();
-    }
-    void pop()
-    {
-        while (!B.empty() && A.top() == B.top())
-            A.pop(), B.pop();
-        A.pop();
-    }
-    int top2()
-    {
-        int t = top(), ret;
-        pop();
-        ret = top();
-        A.push(t);
-        return ret;
-    }
-    int size() { return A.size() - B.size(); }
-} dist[maxn], ch[maxn], ans;
-void dfs(int x, int f, int d, heap &y)
-{
-    y.insert(d);
-    for (int j = h[x]; j; j = nxt[j])
-        if (p[j] != f && !vis[p[j]])
-            dfs(p[j], x, d + 1, y);
-}
-void pre(int x)
-{
-    vis[x] = true;
-    for (int j = h[x]; j; j = nxt[j])
-        if (!vis[p[j]])
+        if (fu == fv)
         {
-            rt = 0;
-            maxx[rt] = inf;
-            sum = siz[p[j]];
-            calcsiz(p[j], -1);
-            calcsiz(rt, -1);
-            fa[rt] = x;
-            dfs(p[j], -1, 1, dist[rt]);
-            ch[x].insert(dist[rt].top());
-            dep[rt] = dep[x] + 1;
-            pre(rt);
-        }
-    ch[x].insert(0);
-    if (ch[x].size() >= 2)
-        ans.insert(ch[x].top() + ch[x].top2());
-    else if (ch[x].size())
-        ans.insert(ch[x].top());
-}
-struct LCA
-{
-    int dep[maxn], lg[maxn], fa[maxn][20];
-    void dfs(int x, int f)
-    {
-        for (int j = h[x]; j; j = nxt[j])
-            if (p[j] != f)
-                dep[p[j]] = dep[x] + 1, fa[p[j]][0] = x, dfs(p[j], x);
-    }
-    void init()
-    {
-        dfs(1, -1);
-        for (int i = 2; i <= n; i++)
-            lg[i] = lg[i / 2] + 1;
-        for (int j = 1; j <= lg[n]; j++)
-            for (int i = 1; i <= n; i++)
-                fa[i][j] = fa[fa[i][j - 1]][j - 1];
-    }
-    int query(int x, int y)
-    {
-        if (dep[x] > dep[y])
-            swap(x, y);
-        int k = dep[y] - dep[x];
-        for (int i = 0; k; k = k / 2, i++)
-            if (k & 1)
-                y = fa[y][i];
-        if (x == y)
-            return x;
-        k = dep[x];
-        for (int i = lg[k]; i >= 0; i--)
-            if (fa[x][i] != fa[y][i])
-                x = fa[x][i], y = fa[y][i];
-        return fa[x][0];
-    }
-    int dist(int x, int y) { return dep[x] + dep[y] - 2 * dep[query(x, y)]; }
-} lca;
-int d[maxn][20];
-int main()
-{
-    scanf("%d", &n);
-    for (int i = 1; i < n; i++)
-        scanf("%d%d", &a, &b), add_edge(a, b), add_edge(b, a);
-    lca.init();
-    rt = 0;
-    maxx[rt] = inf;
-    sum = n;
-    calcsiz(1, -1);
-    calcsiz(rt, -1);
-    pre(rt);
-    // for(int i=1;i<=n;i++)printf("%d ",fa[i]);printf("\n");
-    for (int i = 1; i <= n; i++)
-        for (int j = i; j; j = fa[j])
-            d[i][dep[i] - dep[j]] = lca.dist(i, j);
-    scanf("%d", &m);
-    while (m--)
-    {
-        scanf(" %c", &op);
-        if (op == 'G')
-        {
-            if (ans.size())
-                printf("%d\n", ans.top());
-            else
-                printf("-1\n");
+            if (!conn[fu])
+            {
+                conn[fu] = 1;
+                for (int j = 0; j < pnt[fu].size(); j++)
+                    tr[i + N].push_back(pnt[fu][j]);
+                rt[fu] = i + N;
+            }
         }
         else
         {
-            scanf("%d", &x);
-            if (!col[x])
+            if (conn[fu] || conn[fv])
             {
-                if (ch[x].size() >= 2)
-                    ans.erase(ch[x].top() + ch[x].top2());
-                ch[x].erase(0);
-                if (ch[x].size() >= 2)
-                    ans.insert(ch[x].top() + ch[x].top2());
-                for (int i = x; fa[i]; i = fa[i])
-                {
-                    if (ch[fa[i]].size() >= 2)
-                        ans.erase(ch[fa[i]].top() + ch[fa[i]].top2());
-                    ch[fa[i]].erase(dist[i].top());
-                    dist[i].erase(d[x][dep[x] - dep[fa[i]]]);
-                    if (dist[i].size())
-                        ch[fa[i]].insert(dist[i].top());
-                    if (ch[fa[i]].size() >= 2)
-                        ans.insert(ch[fa[i]].top() + ch[fa[i]].top2());
-                }
+                if (conn[fu])
+                    tr[i + N].push_back(rt[fu]);
+                else
+                    for (int j = 0; j < pnt[fu].size(); j++)
+                        tr[i + N].push_back(pnt[fu][j]);
+                if (conn[fv])
+                    tr[i + N].push_back(rt[fv]);
+                else
+                    for (int j = 0; j < pnt[fv].size(); j++)
+                        tr[i + N].push_back(pnt[fv][j]);
+                conn[fu] = 1, rt[fu] = i + N;
+                B.fa[fv] = fu;
             }
             else
             {
-                if (ch[x].size() >= 2)
-                    ans.erase(ch[x].top() + ch[x].top2());
-                ch[x].insert(0);
-                if (ch[x].size() >= 2)
-                    ans.insert(ch[x].top() + ch[x].top2());
-                for (int i = x; fa[i]; i = fa[i])
+                if ((u == st[fu] || u == en[fu]) && (v == st[fv] || v == en[fv]))
                 {
-                    if (ch[fa[i]].size() >= 2)
-                        ans.erase(ch[fa[i]].top() + ch[fa[i]].top2());
-                    if (dist[i].size())
-                        ch[fa[i]].erase(dist[i].top());
-                    dist[i].insert(d[x][dep[x] - dep[fa[i]]]);
-                    ch[fa[i]].insert(dist[i].top());
-                    if (ch[fa[i]].size() >= 2)
-                        ans.insert(ch[fa[i]].top() + ch[fa[i]].top2());
+                    st[fu] = u ^ st[fu] ^ en[fu];
+                    en[fu] = v ^ st[fv] ^ en[fv];
+                    for (int j = 0; j < pnt[fv].size(); j++)
+                        pnt[fu].push_back(pnt[fv][j]);
+                    B.fa[fv] = fu;
+                }
+                else
+                {
+                    conn[fu] = 1;
+                    for (int j = 0; j < pnt[fu].size(); j++)
+                        tr[i + N].push_back(pnt[fu][j]);
+                    for (int j = 0; j < pnt[fv].size(); j++)
+                        tr[i + N].push_back(pnt[fv][j]);
+                    B.fa[fv] = fu;
+                    rt[fu] = i + N;
                 }
             }
-            col[x] ^= 1;
         }
     }
-    return 0;
+    /*for(int i=0;i<N+M;i++)
+	{
+		printf("%d: ",i);
+		for(int j=0;j<tr[i].size();j++)printf("%d ",tr[i][j]);puts("");
+	}*/
+    for (int i = N + M - 1; i >= 0; i--)
+    {
+        if (!dep[i]) dfs(i, -1);
+    }
+    //for(int i=0;i<N+M;i++){printf("%d\n",dep[i]);for(int j=0;j<4;j++)printf("%d ",fa[i][j]);puts("");}
+}
+
+int getMinimumFuelCapacity(int X, int Y)
+{
+
+    int u = LCA(X, Y);
+    if (u == -1) return -1;
+    return ed[u - n].w;
 }
