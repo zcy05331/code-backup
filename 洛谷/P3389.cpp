@@ -1,46 +1,50 @@
 #include <bits/stdc++.h>
 
-int n;
+#define R register
+#define ll long long
+#define sum(a, b, mod) (((a) + (b)) % mod)
+#define meow(cat...) fprintf(stderr, cat)
 
-double a[200][200], b[200];
+const int MaxN = 2e2 + 10;
+const double eps = 1e-8;
 
-int main()
+int check(double x) 
 {
-    scanf("%d", &n);
-    for (int i = 1; i <= n; i++)
+    if(x > eps) return 1;
+    else if(x < -eps) return -1;
+    else return 0;
+}
+
+int n;
+std::vector<std::vector<double>> a;
+
+signed main()
+{   
+    scanf("%d", &n), a.resize(n + 1);
+    for(int i = 1; i <= n; i++)
+        a[i].resize(n + 2);
+    for(int i = 1; i <= n; i++)
     {
-        for (int j = 1; j <= n; j++)
+        for(int j = 1; j <= n; j++)
             std::cin >> a[i][j];
-        std::cin >> b[i];
-    } 
-    
-    for (int i = 1; i <= n; i++)
+        std::cin >> a[i][n + 1];
+    }
+    for(int i = 1; i <= n; i++)
     {
-        for (int j = i; j <= n; j++)
+        for(int j = i; j <= n; j++)
+            if(check(a[j][i]))
+                std::swap(a[i], a[j]);
+        if(check(a[i][i]) == 0)
+            return 0 * puts("No Solution");
+        for(int j = 1; j <= n; j++)
         {
-            if (fabs(a[j][i]) > 1e-8)
-            {
-                for (int k = 1; k <= n; k++)
-                    std::swap(a[i][k], a[j][k]);
-                std::swap(b[i], b[j]);
-            }
-        }
-        if(fabs(a[i][i]) < 1e-8)
-        {
-            puts("No Solution");
-            return 0;
-        }
-        for (int j = 1; j <= n; j++)
-        {
-            if (i == j)
-                continue;
+            if(i == j) continue;
             double rate = a[j][i] / a[i][i];
-            for (int k = i; k <= n; k++)
+            for(int k = i; k <= n + 1; k++)
                 a[j][k] -= a[i][k] * rate;
-            b[j] -= b[i] * rate;
         }
     }
-    for (int i = 1; i <= n; i++)
-        printf("%.2f\n", b[i] / a[i][i]);
+    for(int i = 1; i <= n; i++)
+        printf("%.2f\n", a[i][n + 1] / a[i][i]);
     return 0;
 }
