@@ -3,6 +3,7 @@
 #define R register
 #define ll long long
 #define sum(a, b, mod) (((a) + (b)) % mod)
+#define meow(cat...) fprintf(stderr, cat)
 
 const int g = 3;
 const int MaxN = 3e5 + 10;
@@ -49,10 +50,13 @@ void ntt(int *a, int flag)
             for (int k = 0; k < i; k++, t = t * 1ll * w % mod)
             {
                 int nx = a[j + k], ny = 1ll * t * a[i + j + k] % mod;
+                meow("$ %d %d\n", nx, ny);
                 a[j + k] = (nx + ny) % mod, a[j + k + i] = (nx - ny + mod) % mod;
             }
         }
     }
+    // for (int i = 0; i < lim; i++)
+    //     meow("%d ", a[i]); puts("");
 }
 
 int main()

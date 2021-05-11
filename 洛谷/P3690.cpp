@@ -3,61 +3,60 @@
 #define R register
 #define ll long long
 #define sum(a, b, mod) (((a) + (b)) % mod)
+#define meow(cat...) fprintf(stderr, cat)
 
 const int MaxN = 3e5 + 10;
+
 int n, m, val[MaxN];
 
 struct LinkCutTree
 {
     int root, ch[MaxN][2], fa[MaxN], rev[MaxN], sum[MaxN];
-    inline void pushup(int x) { sum[x] = sum[ch[x][0]] ^ val[x] ^ sum[ch[x][1]]; }
-    inline void pushdown(int x)
+    void pushup(int x) { sum[x] = sum[ch[x][0]] ^ val[x] ^ sum[ch[x][1]]; }
+    void pushdown(int x)
     {
-        int &l = ch[x][0], &r = ch[x][1];
-        if (rev[x])
-            rev[x] = 0, rev[l] ^= 1, rev[r] ^= 1, std::swap(l, r);
+        int &lc = ch[x][0], &rc = ch[x][1];
+        if(rev[x]) rev[x] ^= 1, rev[lc] ^= 1, rev[rc] ^= 1, std::swap(lc, rc);
     }
-    inline int isroot(int x) { return (ch[fa[x]][0] != x && ch[fa[x]][1] != x); }
-    inline int check(int x) { return (ch[fa[x]][1] == x); }
-    inline void rotate(int x)
+    int check(int x) { return ch[fa[x]][1] == x; }
+    int isroot(int x) { return ch[fa[x]][0] != x && ch[fa[x]][1] != x; }
+    void rotate(int x)
     {
         int f = fa[x], gf = fa[f], tp = check(x);
-        if (!isroot(f))
-            ch[gf][check(f)] = x;
+        if(!isroot(f)) ch[gf][check(f)] = x;
         fa[ch[x][tp ^ 1]] = f, fa[x] = gf, fa[f] = x;
         ch[f][tp] = ch[x][tp ^ 1], ch[x][tp ^ 1] = f, pushup(f), pushup(x);
     }
     void update(int x)
     {
-        if (!isroot(x))
+        if(!isroot(x)) 
             update(fa[x]);
         pushdown(x);
     }
     inline void splay(int x)
     {
         update(x);
-        for (int f = 0; f = fa[x], !isroot(x); rotate(x))
-            if (!isroot(f))
-                rotate((check(x) ^ check(f)) ? x : f);
+        for(int f = 0; f = fa[x], !isroot(x); rotate(x))
+            if(!isroot(f)) rotate((check(x) ^ check(f)) ? x : f);
     }
     inline void access(int x)
     {
-        for (int y = 0; x; y = x, x = fa[x])
+        for(int y = 0; x; y = x, x = fa[x])
             splay(x), ch[x][1] = y, pushup(x);
     }
-    inline void makeroot(int x) { access(x), splay(x), rev[x] = 1; };
+    inline void makeroot(int x) { access(x), splay(x), rev[x] = 1; }
     int getroot(int x)
     {
         access(x), splay(x);
-        while (ch[x][0])
+        while(ch[x][0])
             x = ch[x][0];
         return x;
     }
-    void split(int x, int y) { makeroot(x), access(y), splay(y); };
+    void split(int x, int y) { makeroot(x), access(y), splay(y); }
     void cut(int x, int y)
     {
         makeroot(x);
-        if (getroot(y) != x || fa[x] != y || ch[x][1])
+        if(getroot(y) != x || fa[x] != y || ch[x][1])
             return;
         fa[x] = ch[y][0] = 0, pushup(y);
     }
@@ -85,17 +84,17 @@ int main()
         int op = read(), x = read(), y = read();
         if (op == 0)
             T.split(x, y), printf("%d\n", T.sum[y]);
-        if (op == 1)
+        else if (op == 1)
         {
             int fx = T.getroot(x), fy = T.getroot(y);
             (fx != fy) ? T.link(x, y) : (void)1;
         }
-        if (op == 2)
+        else if (op == 2)
         {
             int fx = T.getroot(x), fy = T.getroot(y);
             (fx == fy) ? T.cut(x, y) : (void)1;
         }
-        if (op == 3)
+        else
             T.access(x), T.splay(x), val[x] = y, T.pushup(x);
     }
     return 0;
